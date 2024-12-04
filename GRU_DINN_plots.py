@@ -1,3 +1,64 @@
+
+import numpy as np
+from scipy.stats import weibull_min
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Define custom colors for plots
+colors = ['#9370DB', '#32CD32', '#1E90FF']
+
+# Function to fit and plot Weibull distribution trends for a given cell
+def plot_weibull_for_cells(rpt_data, aging_data, cell, color, ax_rpt, ax_aging):
+    """
+    Plot Weibull distribution trends for a specific cell in both RPT and Aging datasets.
+    """
+    # RPT Data
+    voltage_data_rpt = rpt_data[rpt_data['Cell'] == cell]['Voltage'].dropna().values
+    shape_rpt, loc_rpt, scale_rpt = weibull_min.fit(voltage_data_rpt, floc=0)
+    x_rpt = np.linspace(voltage_data_rpt.min(), voltage_data_rpt.max(), 100)
+    pdf_fitted_rpt = weibull_min.pdf(x_rpt, shape_rpt, loc_rpt, scale_rpt)
+    
+    # Plot RPT
+    sns.histplot(voltage_data_rpt, bins=30, kde=False, color=color, stat="density", ax=ax_rpt, label=f'Voltage Histogram ({cell})')
+    ax_rpt.plot(x_rpt, pdf_fitted_rpt, 'g-', label=f'Weibull Fit (Shape={shape_rpt:.2f}, Scale={scale_rpt:.2f})')
+    ax_rpt.set_title(f'Weibull Trend for Voltage in {cell} (RPT)')
+    ax_rpt.set_xlabel('Voltage (V)')
+    ax_rpt.set_ylabel('Density')
+    ax_rpt.legend()
+
+    # Aging Data
+    voltage_data_aging = aging_data[aging_data['Cell'] == cell]['Voltage'].dropna().values
+    shape_aging, loc_aging, scale_aging = weibull_min.fit(voltage_data_aging, floc=0)
+    x_aging = np.linspace(voltage_data_aging.min(), voltage_data_aging.max(), 100)
+    pdf_fitted_aging = weibull_min.pdf(x_aging, shape_aging, loc_aging, scale_aging)
+    
+    # Plot Aging
+    sns.histplot(voltage_data_aging, bins=30, kde=False, color=color, stat="density", ax=ax_aging, label=f'Voltage Histogram ({cell})')
+    ax_aging.plot(x_aging, pdf_fitted_aging, 'g-', label=f'Weibull Fit (Shape={shape_aging:.2f}, Scale={scale_aging:.2f})')
+    ax_aging.set_title(f'Weibull Trend for Voltage in {cell} (Aging)')
+    ax_aging.set_xlabel('Voltage (V)')
+    ax_aging.set_ylabel('Density')
+    ax_aging.legend()
+
+# Create a function to generate plots for all cells in RPT and Aging datasets
+def generate_weibull_plots(rpt_data, aging_data):
+    """
+    Generate Weibull plots for all cells in the RPT and Aging datasets.
+    """
+    cells = rpt_data['Cell'].unique()
+    fig, axes = plt.subplots(len(cells), 2, figsize=(14, len(cells) * 6))
+
+    for i, cell in enumerate(cells):
+        plot_weibull_for_cells(rpt_data, aging_data, cell, colors[i % len(colors)], axes[i, 0], axes[i, 1])
+    
+    plt.tight_layout()
+    plt.show()
+
+# Example usage:
+# rpt_sample and aging_sample should contain the relevant data
+# Each sample should include columns 'Voltage' and 'Cell' for analysis
+generate_weibull_plots(rpt_sample, aging_sample)
+
 #plotting:
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
